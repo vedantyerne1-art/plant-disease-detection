@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: plantcare-ai
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt && python download_model.py
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 180 --access-logfile - --error-logfile - app:app
+    healthCheckPath: /health
+    disk:
+      name: plantcare-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: APP_DATA_DIR
+        value: /var/data
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "true"

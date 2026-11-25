@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123D2B">
+  <title>PlantCare AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="#" data-view="overview" aria-label="PlantCare AI overview">
+        <span class="brand-mark">P</span>
+        <span class="brand-name">PlantCare <strong>AI</strong></span>
+      </a>
+      <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-label="Collapse sidebar">
+        <span aria-hidden="true">‹</span>
+      </button>
+    </div>
+
+    <nav class="side-nav" aria-label="Primary navigation">
+      <button class="nav-item active" type="button" data-view="overview"><span class="nav-icon">⌂</span><span>Overview</span></button>
+      <button class="nav-item" type="button" data-view="scanner"><span class="nav-icon">◉</span><span>AI Plant Scanner</span></button>
+      <button class="nav-item" type="button" data-view="garden"><span class="nav-icon">♧</span><span>My Garden</span></button>
+      <button class="nav-item" type="button" data-view="disease"><span class="nav-icon">◇</span><span>Disease Library</span></button>
+      <button class="nav-item" type="button" data-view="doctor"><span class="nav-icon">✦</span><span>AI Plant Doctor</span></button>
+      <button class="nav-item" type="button" data-view="history"><span class="nav-icon">↶</span><span>Scan History</span></button>
+      <button class="nav-item" type="button" data-view="reminders"><span class="nav-icon">◷</span><span>Reminders</span></button>
+      <button class="nav-item" type="button" data-view="weather"><span class="nav-icon">☁</span><span>Weather</span></button>
+      <button class="nav-item" type="button" data-view="reports"><span class="nav-icon">▤</span><span>Reports</span></button>
+      <button class="nav-item" type="button" data-view="settings"><span class="nav-icon">⚙</span><span>Settings</span></button>
+    </nav>
+
+    <div class="profile-card" id="profileMenu">
+      <div class="avatar" aria-hidden="true">GC</div>
+      <div class="profile-copy">
+        <strong>Guest grower</strong>
+        <span>Local workspace</span>
+      </div>
+      <button class="icon-button" type="button" data-view="settings" aria-label="Open settings">⋯</button>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button mobile-menu" id="mobileMenu" type="button" aria-label="Open navigation">☰</button>
+      <div class="topbar-search" role="search">
+        <span aria-hidden="true">⌕</span>
+        <input type="search" id="globalSearch" placeholder="Search plants or insights" aria-label="Search plants or insights">
+      </div>
+      <div class="topbar-actions">
+        <button class="language-button" id="languageButton" type="button" aria-label="Choose language"><span>EN</span>⌄</button>
+        <button class="icon-button notification-button" type="button" aria-label="Notifications">♢</button>
+        <button class="top-avatar" type="button" data-view="settings" aria-label="Open profile">GC</button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="view active" id="view-overview">
+        <div class="page-heading">
+          <div>
+            <p class="greeting">Good morning</p>
+            <h1>Welcome to PlantCare AI</h1>
+            <p class="page-subtitle">Understand your plants. Protect their future.</p>
+          </div>
+          <button class="primary-button" type="button" data-view="scanner"><span>◉</span> Quick scan</button>
+        </div>
+
+        <div class="stat-grid" aria-label="Overview statistics">
+          <article class="stat-card"><div class="stat-icon forest">♧</div><div><span>Total plants</span><strong>0</strong></div></article>
+          <article class="stat-card"><div class="stat-icon blue">◉</div><div><span>Total scans</span><strong id="overviewScanCount">0</strong></div></article>
+          <article class="stat-card"><div class="stat-icon gold">✓</div><div><span>Healthy predictions</span><strong id="healthyCount">0</strong></div></article>
+          <article class="stat-card"><div class="stat-icon coral">!</div><div><span>Possible diseases</span><strong id="diseaseCount">0</strong></div></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel welcome-panel">
+            <div>
+              <p class="eyebrow">PLANT CHECKUP</p>
+              <h2>How healthy is your plant today?</h2>
+              <p>Take a clear leaf photo and receive an AI-assisted preliminary diagnosis.</p>
+              <div class="inline-actions">
+                <button class="primary-button" type="button" data-view="scanner">Scan a leaf</button>
+                <button class="secondary-button" type="button" id="uploadFromOverview">Upload image</button>
+              </div>
+            </div>
+            <div class="plant-illustration" aria-hidden="true">
+              <div class="leaf leaf-one"></div><div class="leaf leaf-two"></div><div class="leaf leaf-three"></div>
+              <div class="stem"></div>
+            </div>
+          </section>
+
+          <section class="panel quick-panel">
+            <div class="panel-heading"><div><p class="eyebrow">QUICK ACTIONS</p><h2>Get started</h2></div></div>
+            <button class="quick-action" type="button" data-view="scanner"><span class="quick-icon">◉</span><span><strong>Scan a leaf</strong><small>Camera or gallery</small></span><b>›</b></button>
+            <button class="quick-action" type="button" data-view="garden"><span class="quick-icon">＋</span><span><strong>Add a plant</strong><small>Available with My Garden</small></span><b>›</b></button>
+            <button class="quick-action" type="button" data-view="doctor"><span class="quick-icon">✦</span><span><strong>Ask Plant Doctor</strong><small>General plant guidance</small></span><b>›</b></button>
+          </section>
+
+          <section class="panel recent-panel">
+            <div class="panel-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Latest scans</h2></div><button class="text-button" type="button" data-view="history">View all</button></div>
+            <div class="empty-state" id="recentEmpty">
+              <div class="empty-icon">◉</div>
+              <h3>No scans yet</h3>
+              <p>Your completed leaf checks will appear here.</p>
+              <button class="secondary-button" type="button" data-view="scanner">Start first scan</button>
+            </div>
+          </section>
+
+          <section class="panel garden-panel">
+            <div class="panel-heading"><div><p class="eyebrow">MY GARDEN</p><h2>Saved plants</h2></div><button class="text-button" type="button" data-view="garden">View garden</button></div>
+            <div class="empty-state compact">
+              <div class="empty-icon">♧</div>
+              <h3>Your garden is empty</h3>
+              <p>Plant management will be available in the next phase.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-scanner">
+        <div class="page-heading scanner-heading">
+          <div>
+            <p class="greeting">AI Plant Scanner</p>
+            <h1>Let’s understand your plant.</h1>
+            <p class="page-subtitle">Take a clear photograph or upload a leaf image for a preliminary check.</p>
+          </div>
+        </div>
+
+        <div class="scanner-layout">
+          <section class="panel scanner-panel">
+            <div class="dropzone" id="dropzone">
+              <div class="placeholder" id="placeholder">
+                <div class="upload-icon">＋</div>
+                <strong>Add a clear leaf image</strong>
+                <span>JPG, JPEG, PNG or WEBP • Maximum 10 MB</span>
+              </div>
+              <img id="preview" alt="Selected leaf preview" hidden>
+              <video id="cameraPreview" autoplay playsinline hidden></video>
+            </div>
+            <canvas id="cameraCanvas" hidden></canvas>
+
+            <div class="camera-actions" id="cameraActions" hidden>
+              <button class="secondary-button" type="button" id="captureBtn">Capture photo</button>
+              <button class="text-button" type="button" id="closeCameraBtn">Close camera</button>
+            </div>
+
+            <div class="scanner-actions">
+              <button class="primary-button" type="button" id="cameraBtn"><span>◉</span> Take a photo</button>
+              <label class="secondary-button" for="galleryInput"><span>▧</span> Upload image</label>
+              <input id="galleryInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </div>
+            <div class="file-name" id="fileName">No image selected</div>
+            <div class="action-row">
+              <button class="primary-button analyze-button" id="analyzeBtn" type="button" disabled>Analyze leaf <span>→</span></button>
+              <button class="secondary-button" id="resetBtn" type="button" disabled>Clear</button>
+            </div>
+            <p class="privacy">Your image is processed by this local application server and is not uploaded to a third party.</p>
+          </section>
+
+          <aside class="scanner-guide">
+            <h2>For a better photo</h2>
+            <ul>
+              <li><span>1</span><div><strong>Fill the frame</strong><small>Keep one leaf clearly visible.</small></div></li>
+              <li><span>2</span><div><strong>Use natural light</strong><small>Avoid harsh shadows and glare.</small></div></li>
+              <li><span>3</span><div><strong>Keep it in focus</strong><small>Clean blur and multiple leaves.</small></div></li>
+            </ul>
+            <div class="safety-note"><strong>Important</strong><p>An AI result is preliminary guidance, not a confirmed diagnosis.</p></div>
+          </aside>
+
+          <section class="panel result-panel" id="result" hidden aria-live="polite">
+            <div class="result-header">
+              <div><p class="eyebrow">ANALYSIS REPORT</p><h2 id="resultTitle">Prediction</h2></div>
+              <div class="account-row"><span class="confidence-badge" id="resultConfidence"></span><button class="secondary-button" id="saveScanBtn" type="button">Save scan</button></div>
+            </div>
+            <div class="result-grid">
+              <div><span>Status</span><strong id="resultStatus"></strong></div>
+              <div><span>Top prediction</span><strong id="resultDiagnosis"></strong></div>
+            </div>
+            <div class="quality-banner" id="qualityBanner" hidden></div>
+            <div class="report-grid">
+              <article class="report-section">
+                <p class="eyebrow">DIAGNOSIS</p>
+                <h3 id="reportDiagnosis"></h3>
+                <p id="reportDescription"></p>
+              </article>
+              <article class="report-section">
+                <p class="eyebrow">SEVERITY</p>
+                <h3 id="severityValue">Unknown</h3>
+                <p id="severityBasis"></p>
+              </article>
+              <article class="report-section">
+                <p class="eyebrow">SYMPTOMS</p>
+                <ul id="reportSymptoms"></ul>
+              </article>
+              <article class="report-section">
+                <p class="eyebrow">POSSIBLE CAUSES</p>
+                <ul id="reportCauses"></ul>
+              </article>
+              <article class="report-section">
+                <p class="eyebrow">IMMEDIATE CARE</p>
+                <ul id="reportTreatment"></ul>
+              </article>
+              <article class="report-section">
+                <p class="eyebrow">PREVENTION</p>
+                <ul id="reportPrevention"></ul>
+              </article>
+              <article class="report-section report-sources">
+                <p class="eyebrow">REFERENCES</p>
+                <ul id="reportSources"></ul>
+              </article>
+            </div>
+            <h3>Alternative predictions</h3>
+            <div class="prediction-list" id="topPredictions"></div>
+            <p class="disclaimer" id="resultNote"></p>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="view-garden"></section>
+      <section class="view" id="view-disease"></section>
+      <section class="view" id="view-doctor"></section>
+      <section class="view" id="view-history"></section>
+      <section class="view" id="view-reminders"></section>
+      <section class="view" id="view-weather"></section>
+      <section class="view" id="view-reports"></section>
+      <section class="view" id="view-settings"></section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Mobile navigation">
+    <button class="active" type="button" data-view="overview"><span>⌂</span><small>Overview</small></button>
+    <button type="button" data-view="scanner"><span>◉</span><small>Scanner</small></button>
+    <button type="button" data-view="garden"><span>♧</span><small>Garden</small></button>
+    <button type="button" data-view="doctor"><span>✦</span><small>Doctor</small></button>
+  </nav>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <dialog class="auth-dialog" id="authDialog">
+    <form method="dialog" class="dialog-close-form"><button class="icon-button" value="cancel" aria-label="Close">×</button></form>
+    <div class="auth-tabs">
+      <button class="active" type="button" id="loginTab">Log in</button>
+      <button type="button" id="registerTab">Create account</button>
+    </div>
+    <form id="authForm" class="auth-form">
+      <div class="auth-name-field" id="authNameField" hidden>
+        <label for="authName">Name</label>
+        <input id="authName" type="text" autocomplete="name" maxlength="100">
+      </div>
+      <label for="authEmail">Email</label>
+      <input id="authEmail" type="email" autocomplete="email" required>
+      <label for="authPassword">Password</label>
+      <input id="authPassword" type="password" autocomplete="current-password" minlength="8" required>
+      <button class="primary-button" id="authSubmit" type="submit">Log in</button>
+    </form>
+  </dialog>
+  <dialog class="plant-dialog" id="plantDialog">
+    <form method="dialog" class="dialog-close-form"><button class="icon-button" value="cancel" aria-label="Close">×</button></form>
+    <h2>Add a plant</h2>
+    <form id="plantForm" class="plant-form">
+      <label for="plantName">Plant name</label><input id="plantName" required maxlength="100">
+      <label for="plantType">Plant type</label><input id="plantType" required maxlength="100" placeholder="Tomato, Aloe, Houseplant">
+      <label for="plantDate">Planting date</label><input id="plantDate" type="date">
+      <label for="plantLocation">Location</label><input id="plantLocation" maxlength="150" placeholder="Garden bed, balcony">
+      <label for="plantNotes">Notes</label><textarea id="plantNotes" maxlength="1000"></textarea>
+      <button class="primary-button" type="submit">Save plant</button>
+    </form>
+  </dialog>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
