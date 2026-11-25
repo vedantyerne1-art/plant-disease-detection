@@ -111,8 +111,9 @@ SESSION_COOKIE_SECURE=true
 
 - English, Hindi, and Marathi navigation language switching.
 - Database-grounded Plant Doctor responses use disease records and clearly remain preliminary guidance.
-- Authenticated reminders support creation, completion, and deletion.
-- Weather uses Open-Meteo and supports browser location or manual coordinates.
+- Authenticated reminders support creation, completion, deletion, and calendar-event export. Add the downloaded event to the phone calendar to receive its alert; the website cannot set the phone's Clock alarm directly.
+- Weather uses Open-Meteo for current local conditions and general care guidance, with browser location or manual coordinates.
+- Saved scan predictions and confidence details are available in the account's Scan History.
 - Weather and Plant Doctor views provide clear unavailable/error states.
 
 ## Deploy on Render

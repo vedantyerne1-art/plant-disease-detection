@@ -28,7 +28,6 @@ let authMode = "login";
 let lastPrediction = null;
 
 const placeholders = {
-  reports: ["Reports", "Printable diagnosis reports will be available in Phase 6", "▤"],
   settings: ["Settings", "Account and language preferences will be available in later phases", "⚙"]
 };
 
@@ -44,6 +43,11 @@ Object.entries(placeholders).forEach(([name, [title, description, icon]]) => {
       </div>
     </div>`;
 });
+
+document.getElementById("view-reports").innerHTML = `
+  <div class="page-heading"><div><p class="greeting">Reports</p><h1>Saved diagnosis reports</h1><p class="page-subtitle">Save an analysis to your account, then review it in Scan History.</p></div></div>
+  <div class="feature-placeholder"><div><div class="empty-icon">▤</div><h1>Your saved scan reports</h1><p>Saved predictions and confidence details are available in your account history. On the free demo, server restarts may clear saved data.</p><button class="secondary-button" type="button" id="openScanHistoryBtn">Open Scan History</button></div></div>`;
+document.getElementById("openScanHistoryBtn").addEventListener("click", () => switchView("history"));
 
 const gardenView = document.getElementById("view-garden");
 gardenView.innerHTML = `
@@ -68,6 +72,7 @@ document.getElementById("view-reminders").innerHTML = `
     <input id="reminderDue" type="datetime-local" required>
     <button class="primary-button" type="submit">Add reminder</button>
   </form>
+  <p class="page-subtitle">For a phone alert, add each reminder to your calendar. Its notification sound and timing follow your phone’s calendar settings.</p>
   <div class="reminder-list" id="reminderList"></div>`;
 
 document.getElementById("view-doctor").innerHTML = `
@@ -92,7 +97,7 @@ document.getElementById("view-doctor").innerHTML = `
   </div>`;
 
 document.getElementById("view-weather").innerHTML = `
-  <div class="page-heading"><div><p class="greeting">Weather</p><h1>Weather-based plant care</h1><p class="page-subtitle">Use your location or enter coordinates manually.</p></div></div>
+  <div class="page-heading"><div><p class="greeting">Weather</p><h1>Weather-based plant care</h1><p class="page-subtitle">Use your location or enter coordinates manually. Weather requests go directly to Open-Meteo; PlantCare AI does not save your coordinates.</p></div></div>
   <div class="weather-panel">
     <div class="weather-actions">
       <button class="primary-button" type="button" id="useLocationBtn">Use my location</button>
@@ -174,18 +179,18 @@ async function readJsonResponse(response) {
   try {
     body = await response.text();
   } catch {
-    throw new Error(`Could not read the server response (HTTP ${response.status}). Please try again.`);
+    throw new Error(`Could not read the service response (HTTP ${response.status}). Please try again.`);
   }
 
   const status = response.ok ? "" : ` (HTTP ${response.status})`;
   if (!body.trim()) {
-    throw new Error(`The server returned an empty response${status}. Please try again.`);
+    throw new Error(`The service returned an empty response${status}. Please try again.`);
   }
 
   try {
     return JSON.parse(body);
   } catch {
-    throw new Error(`The server returned an invalid JSON response${status}. Please try again.`);
+    throw new Error(`The service returned an invalid JSON response${status}. Please try again.`);
   }
 }
 
@@ -444,16 +449,44 @@ async function loadWeather(latitude, longitude) {
   const result = document.getElementById("weatherResult");
   result.textContent = "Loading current weather...";
   try {
-    const payload = await apiFetch(`/api/weather?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}`);
+    const params = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      current: "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code",
+      timezone: "auto"
+    });
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+    const payload = await readJsonResponse(response);
+    if (!response.ok) throw new Error(payload.reason || `Open-Meteo returned HTTP ${response.status}.`);
+
+    const current = payload.current || {};
+    const temperature = Number(current.temperature_2m);
+    if (!Number.isFinite(temperature)) throw new Error("Weather service returned no current temperature.");
+    const humidity = typeof current.relative_humidity_2m === "number" ? current.relative_humidity_2m : null;
+    const rainValue = current.rain ?? current.precipitation;
+    const rain = typeof rainValue === "number" ? rainValue : null;
+    let guidance = "Check soil moisture before watering.";
+    if (rain !== null && rain > 0) {
+      guidance = "Rain is present or recently detected; delay watering if the soil remains moist.";
+    } else if (humidity !== null && humidity > 85) {
+      guidance = "High humidity increases disease risk; improve airflow and avoid overhead watering.";
+    } else if (temperature > 32) {
+      guidance = "Use shade during peak heat and check soil moisture more often.";
+    } else if (temperature < 5) {
+      guidance = "Protect sensitive plants from cold; move potted plants under cover if possible.";
+    }
+
     result.innerHTML = `
       <div class="weather-grid">
-        <article><span>Temperature</span><strong>${payload.temperature_c ?? "—"}°C</strong></article>
-        <article><span>Humidity</span><strong>${payload.humidity_percent ?? "—"}%</strong></article>
-        <article><span>Rain</span><strong>${payload.rain_mm ?? "—"} mm</strong></article>
+        <article><span>Temperature</span><strong>${temperature.toFixed(1)}°C</strong></article>
+        <article><span>Humidity</span><strong>${humidity === null ? "—" : `${humidity}%`}</strong></article>
+        <article><span>Rain</span><strong>${rain === null ? "—" : `${rain} mm`}</strong></article>
       </div>
-      <div class="weather-guidance"><strong>Care guidance</strong><p>${escapeHtml(payload.guidance)}</p><small>Source: ${escapeHtml(payload.source)}</small></div>`;
+      <div class="weather-guidance"><strong>Care guidance</strong><p>${escapeHtml(guidance)}</p><small>Source: Open-Meteo current conditions</small></div>`;
   } catch (error) {
-    result.textContent = error.message;
+    result.textContent = error instanceof TypeError
+      ? "Could not reach Open-Meteo. Check your connection and try again."
+      : error.message;
   }
 }
 
@@ -717,6 +750,17 @@ async function loadReminders() {
           <button class="text-button" type="button" data-reminder-complete="${reminder.id}" data-completed="${reminder.completed ? "0" : "1"}">${reminder.completed ? "Mark active" : "Mark complete"}</button>
           <button class="text-button" type="button" data-delete-reminder="${reminder.id}">Delete</button>
         </div>`;
+      if (!reminder.completed) {
+        const calendarButton = document.createElement("button");
+        calendarButton.className = "text-button";
+        calendarButton.type = "button";
+        calendarButton.textContent = "Add to phone calendar";
+        calendarButton.dataset.addToCalendar = "true";
+        calendarButton.dataset.reminderId = reminder.id;
+        calendarButton.dataset.reminderTitle = reminder.title;
+        calendarButton.dataset.reminderDue = reminder.due_at;
+        row.querySelector(".account-row").prepend(calendarButton);
+      }
       list.appendChild(row);
     });
   } catch (error) {
@@ -747,7 +791,73 @@ document.getElementById("reminderForm").addEventListener("submit", async event =
   }
 });
 
+function escapeCalendarText(value) {
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+function formatCalendarDate(date) {
+  const pad = value => String(value).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+}
+
+function downloadReminderCalendar(reminder) {
+  const start = new Date(reminder.due_at);
+  if (Number.isNaN(start.getTime())) {
+    throw new Error("This reminder has an invalid date or time.");
+  }
+  const end = new Date(start.getTime() + 5 * 60 * 1000);
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  const title = escapeCalendarText(reminder.title);
+  const calendar = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//PlantCare AI//Care Reminders//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:plantcare-${reminder.id}-${Date.now()}@plantcare-ai`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${formatCalendarDate(start)}`,
+    `DTEND:${formatCalendarDate(end)}`,
+    `SUMMARY:${title}`,
+    "BEGIN:VALARM",
+    "TRIGGER:PT0S",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:${title}`,
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR",
+    ""
+  ].join("\r\n");
+  const url = URL.createObjectURL(new Blob([calendar], { type: "text/calendar;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `plantcare-reminder-${reminder.id}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 document.addEventListener("click", async event => {
+  const calendarButton = event.target.closest("[data-add-to-calendar]");
+  if (calendarButton) {
+    try {
+      downloadReminderCalendar({
+        id: calendarButton.dataset.reminderId,
+        title: calendarButton.dataset.reminderTitle,
+        due_at: calendarButton.dataset.reminderDue
+      });
+      showToast("Calendar event downloaded. Open it in your phone calendar and choose Add.");
+    } catch (error) {
+      showToast(error.message, "error");
+    }
+    return;
+  }
+
   const complete = event.target.closest("[data-reminder-complete]");
   if (complete) {
     try {
@@ -876,6 +986,9 @@ analyzeBtn.addEventListener("click", async () => {
     });
 
     result.hidden = false;
+    const saveScanButton = document.getElementById("saveScanBtn");
+    saveScanButton.disabled = false;
+    saveScanButton.textContent = "Save to history";
     addRecentScan(payload);
     showToast("Analysis completed.");
     result.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -950,7 +1063,10 @@ document.getElementById("saveScanBtn").addEventListener("click", async () => {
         scan_date: lastPrediction.scan_date
       })
     });
-    showToast("Scan saved to your account.");
+    const saveScanButton = document.getElementById("saveScanBtn");
+    saveScanButton.disabled = true;
+    saveScanButton.textContent = "Saved to history";
+    showToast("Scan report saved to your account history.");
   } catch (error) {
     showToast(error.message, "error");
   }
