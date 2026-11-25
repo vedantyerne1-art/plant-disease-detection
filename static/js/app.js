@@ -1,8 +1,10 @@
 const galleryInput = document.getElementById("galleryInput");
+const cameraInput = document.getElementById("cameraInput");
 const preview = document.getElementById("preview");
 const cameraPreview = document.getElementById("cameraPreview");
 const cameraCanvas = document.getElementById("cameraCanvas");
 const cameraActions = document.getElementById("cameraActions");
+const cameraHelp = document.getElementById("cameraHelp");
 const placeholder = document.getElementById("placeholder");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const resetBtn = document.getElementById("resetBtn");
@@ -472,13 +474,15 @@ function stopCamera() {
   }
   cameraPreview.hidden = true;
   cameraActions.hidden = true;
-  cameraPreview.removeAttribute("srcObject");
+  cameraPreview.srcObject = null;
 }
 
 function resetSelection() {
   stopCamera();
   selectedFile = null;
   galleryInput.value = "";
+  cameraInput.value = "";
+  cameraHelp.hidden = true;
   preview.removeAttribute("src");
   preview.hidden = true;
   placeholder.hidden = false;
@@ -491,6 +495,7 @@ function resetSelection() {
 function chooseFile(file) {
   if (!file) return;
   stopCamera();
+  cameraHelp.hidden = true;
   if (!file.type.startsWith("image/")) {
     showToast("Please choose an image file.", "error");
     return;
@@ -515,7 +520,14 @@ function chooseFile(file) {
   result.hidden = true;
 }
 
-galleryInput.addEventListener("change", event => chooseFile(event.target.files[0]));
+galleryInput.addEventListener("change", event => {
+  chooseFile(event.target.files[0]);
+  event.target.value = "";
+});
+cameraInput.addEventListener("change", event => {
+  chooseFile(event.target.files[0]);
+  event.target.value = "";
+});
 resetBtn.addEventListener("click", resetSelection);
 
 ["dragenter", "dragover"].forEach(type => {
@@ -533,8 +545,15 @@ resetBtn.addEventListener("click", resetSelection);
 dropzone.addEventListener("drop", event => chooseFile(event.dataTransfer.files[0]));
 
 document.getElementById("cameraBtn").addEventListener("click", async () => {
+  cameraHelp.hidden = true;
+  if (window.isSecureContext === false) {
+    cameraHelp.textContent = "Live camera needs a secure HTTPS link. Open this site in Safari or Chrome, or use phone camera capture.";
+    cameraHelp.hidden = false;
+    return;
+  }
   if (!navigator.mediaDevices?.getUserMedia) {
-    showToast("Live camera capture is unavailable in this browser.", "error");
+    cameraHelp.textContent = "Live camera is unavailable in this browser. Use phone camera capture or upload an image.";
+    cameraHelp.hidden = false;
     return;
   }
   try {
@@ -547,10 +566,25 @@ document.getElementById("cameraBtn").addEventListener("click", async () => {
     placeholder.hidden = true;
     preview.hidden = true;
     cameraActions.hidden = false;
+    await cameraPreview.play();
   } catch (error) {
-    showToast("Camera permission was not granted. Use gallery upload instead.", "error");
+    stopCamera();
+    if (!selectedFile) placeholder.hidden = false;
+    console.warn("Live camera initialization failed:", error);
+    if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      cameraHelp.textContent = "Camera access is blocked. Allow Camera for this site in your browser settings, then reload. Or use phone camera capture or upload.";
+    } else if (error.name === "NotFoundError") {
+      cameraHelp.textContent = "No camera was found. Use phone camera capture or upload an image.";
+    } else if (error.name === "NotReadableError") {
+      cameraHelp.textContent = "The camera is busy. Close other apps using it, then try again or use phone camera capture.";
+    } else {
+      cameraHelp.textContent = "Could not open live camera. Use phone camera capture or upload an image.";
+    }
+    cameraHelp.hidden = false;
   }
 });
+
+document.getElementById("deviceCameraBtn").addEventListener("click", () => cameraInput.click());
 
 document.getElementById("captureBtn").addEventListener("click", () => {
   const width = cameraPreview.videoWidth;
@@ -563,7 +597,11 @@ document.getElementById("captureBtn").addEventListener("click", () => {
   cameraCanvas.height = height;
   cameraCanvas.getContext("2d").drawImage(cameraPreview, 0, 0, width, height);
   cameraCanvas.toBlob(blob => {
-    if (!blob) return;
+    if (!blob) {
+      cameraHelp.textContent = "Could not capture the photo. Try the phone camera button or upload an image.";
+      cameraHelp.hidden = false;
+      return;
+    }
     stopCamera();
     chooseFile(new File([blob], "camera-photo.jpg", { type: "image/jpeg" }));
   }, "image/jpeg", 0.92);

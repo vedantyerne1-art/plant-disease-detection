@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='camera-20261125') }}">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -140,18 +140,21 @@
                 <span>JPG, JPEG, PNG or WEBP • Maximum 10 MB</span>
               </div>
               <img id="preview" alt="Selected leaf preview" hidden>
-              <video id="cameraPreview" autoplay playsinline hidden></video>
+              <video id="cameraPreview" autoplay playsinline muted hidden></video>
             </div>
             <canvas id="cameraCanvas" hidden></canvas>
 
+            <p class="camera-help" id="cameraHelp" role="status" aria-live="polite" hidden></p>
             <div class="camera-actions" id="cameraActions" hidden>
               <button class="secondary-button" type="button" id="captureBtn">Capture photo</button>
               <button class="text-button" type="button" id="closeCameraBtn">Close camera</button>
             </div>
 
             <div class="scanner-actions">
-              <button class="primary-button" type="button" id="cameraBtn"><span>◉</span> Take a photo</button>
+              <button class="primary-button" type="button" id="cameraBtn"><span>◉</span> Live camera</button>
+              <button class="secondary-button" type="button" id="deviceCameraBtn"><span>◉</span> Use phone camera</button>
               <label class="secondary-button" for="galleryInput"><span>▧</span> Upload image</label>
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
               <input id="galleryInput" type="file" accept="image/jpeg,image/png,image/webp" hidden>
             </div>
             <div class="file-name" id="fileName">No image selected</div>
@@ -159,7 +162,7 @@
               <button class="primary-button analyze-button" id="analyzeBtn" type="button" disabled>Analyze leaf <span>→</span></button>
               <button class="secondary-button" id="resetBtn" type="button" disabled>Clear</button>
             </div>
-            <p class="privacy">Your image is processed by this local application server and is not uploaded to a third party.</p>
+            <p class="privacy">Your image is sent securely to the PlantCare AI server for analysis and is not saved by the app after processing.</p>
           </section>
 
           <aside class="scanner-guide">
@@ -271,6 +274,6 @@
       <button class="primary-button" type="submit">Save plant</button>
     </form>
   </dialog>
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js', v='camera-20261125') }}"></script>
 </body>
 </html>
