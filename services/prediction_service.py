@@ -11,11 +11,16 @@ from inference import predict_leaf
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 MIN_IMAGE_WIDTH = 80
 MIN_IMAGE_HEIGHT = 80
+MIN_SUPPORTED_LEAF_CONFIDENCE_PERCENT = 20.0
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 ALLOWED_PIL_FORMATS = {"JPEG", "PNG", "WEBP"}
 
 
 class ImageValidationError(ValueError):
+    pass
+
+
+class UnsupportedImageError(ImageValidationError):
     pass
 
 
@@ -64,17 +69,24 @@ def analyze_upload(file_storage):
     image = validate_upload(file_storage)
     try:
         result = predict_leaf(image)
-        quality = assess_image_quality(image)
-        result["image_quality"] = quality
-        result["scan_date"] = datetime.now(timezone.utc).isoformat()
-        if quality["status"] != "good":
-            result["status"] = "Inconclusive — image quality needs review"
-            result["confidence_warning"] = True
-        return result
     except Exception as error:
         raise PredictionServiceError(
             "The AI model could not process this image. Please try again."
         ) from error
+
+    if result["confidence"] < MIN_SUPPORTED_LEAF_CONFIDENCE_PERCENT:
+        raise UnsupportedImageError(
+            "I couldn't confidently identify a supported plant leaf. "
+            "Please upload a clear, close-up photo of one leaf."
+        )
+
+    quality = assess_image_quality(image)
+    result["image_quality"] = quality
+    result["scan_date"] = datetime.now(timezone.utc).isoformat()
+    if quality["status"] != "good":
+        result["status"] = "Inconclusive — image quality needs review"
+        result["confidence_warning"] = True
+    return result
 
 
 def assess_image_quality(image):

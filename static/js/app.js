@@ -7,6 +7,7 @@ const cameraActions = document.getElementById("cameraActions");
 const cameraHelp = document.getElementById("cameraHelp");
 const placeholder = document.getElementById("placeholder");
 const analyzeBtn = document.getElementById("analyzeBtn");
+const analysisMessage = document.getElementById("analysisMessage");
 const resetBtn = document.getElementById("resetBtn");
 const fileName = document.getElementById("fileName");
 const result = document.getElementById("result");
@@ -483,6 +484,8 @@ function resetSelection() {
   galleryInput.value = "";
   cameraInput.value = "";
   cameraHelp.hidden = true;
+  analysisMessage.hidden = true;
+  analysisMessage.classList.remove("error");
   preview.removeAttribute("src");
   preview.hidden = true;
   placeholder.hidden = false;
@@ -496,6 +499,8 @@ function chooseFile(file) {
   if (!file) return;
   stopCamera();
   cameraHelp.hidden = true;
+  analysisMessage.hidden = true;
+  analysisMessage.classList.remove("error");
   if (!file.type.startsWith("image/")) {
     showToast("Please choose an image file.", "error");
     return;
@@ -778,6 +783,9 @@ analyzeBtn.addEventListener("click", async () => {
   formData.append("image", selectedFile);
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = "Analyzing…";
+  analysisMessage.textContent = "On the free demo, the first scan after inactivity may take 50+ seconds. Keep this page open.";
+  analysisMessage.classList.remove("error");
+  analysisMessage.hidden = false;
   result.hidden = true;
 
   try {
@@ -786,6 +794,7 @@ analyzeBtn.addEventListener("click", async () => {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Analysis failed.");
 
+    analysisMessage.hidden = true;
     document.getElementById("resultTitle").textContent = "Analysis complete";
     document.getElementById("resultStatus").textContent = payload.status;
     document.getElementById("resultConfidence").textContent = `${payload.confidence}% confidence`;
@@ -852,6 +861,9 @@ analyzeBtn.addEventListener("click", async () => {
     showToast("Analysis completed.");
     result.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
+    analysisMessage.textContent = error.message;
+    analysisMessage.classList.add("error");
+    analysisMessage.hidden = false;
     showToast(error.message, "error");
   } finally {
     analyzeBtn.disabled = !selectedFile;

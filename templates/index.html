@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='camera-20261125') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='scan-20261125-2') }}">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -162,6 +162,7 @@
               <button class="primary-button analyze-button" id="analyzeBtn" type="button" disabled>Analyze leaf <span>→</span></button>
               <button class="secondary-button" id="resetBtn" type="button" disabled>Clear</button>
             </div>
+            <p class="analysis-help" id="analysisMessage" role="status" aria-live="polite" hidden></p>
             <p class="privacy">Your image is sent securely to the PlantCare AI server for analysis and is not saved by the app after processing.</p>
           </section>
 
@@ -274,6 +275,6 @@
       <button class="primary-button" type="submit">Save plant</button>
     </form>
   </dialog>
-  <script src="{{ url_for('static', filename='js/app.js', v='camera-20261125') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js', v='scan-20261125-2') }}"></script>
 </body>
 </html>

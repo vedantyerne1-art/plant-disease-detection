@@ -76,6 +76,25 @@ class PlantCareApiTests(unittest.TestCase):
         self.assertIn("too large", response.get_json()["error"].lower())
 
     @patch("services.prediction_service.predict_leaf")
+    def test_low_confidence_non_leaf_image_is_rejected(self, mock_predict):
+        mock_predict.return_value = {
+            "plant_diagnosis": "Aloe - Healthy",
+            "confidence": 8.9,
+            "status": "Inconclusive",
+            "top_predictions": [],
+            "note": "Preliminary guidance",
+            "raw_label": "aloe_healthy",
+        }
+        response = self.client.post(
+            "/api/analyze",
+            data={"image": (io.BytesIO(image_bytes()), "object.png")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("supported plant leaf", response.get_json()["error"])
+        self.assertNotIn("plant_diagnosis", response.get_json())
+
+    @patch("services.prediction_service.predict_leaf")
     def test_valid_supported_formats_preserve_api_contract(self, mock_predict):
         mock_predict.return_value = {
             "plant_diagnosis": "Tomato - Healthy",

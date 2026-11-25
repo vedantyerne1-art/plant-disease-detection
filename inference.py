@@ -117,9 +117,9 @@ def predict_leaf(image):
         "severity": "Unknown",
         "severity_basis": "Severity is not inferred from model confidence; visual examination and local expertise are required.",
         "note": (
-            "This model always selects one of its 54 known classes. "
-            "Even a high score cannot confirm an unfamiliar plant, disease, or non-leaf image. "
-            "Use this as preliminary guidance and confirm important decisions with an agricultural expert."
+            "Low-confidence images are rejected as unsupported or unclear. "
+            "This is not a definitive non-leaf detector, and other images may still be misclassified. "
+            "Treat predictions as preliminary and confirm important decisions with an agricultural expert."
         ),
         "top_predictions": top_predictions
     }

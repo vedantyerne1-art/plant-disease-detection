@@ -336,6 +336,8 @@ img, video { max-width: 100%; }
 .file-name { min-height: 18px; margin: 12px 0; text-align: center; color: var(--secondary); font-size: 11px; }
 .action-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
 .analyze-button { width: 100%; }
+.analysis-help { margin: 10px 0 0; color: var(--secondary); font-size: 12px; line-height: 1.5; }
+.analysis-help.error { color: #8A3B31; }
 .privacy { margin: 14px 0 0; text-align: center; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .scanner-guide { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--cream); padding: 22px; }
 .scanner-guide h2 { margin: 0; color: var(--deep-forest); font: 800 18px Manrope, sans-serif; }

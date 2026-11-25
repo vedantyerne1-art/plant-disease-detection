@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, jsonify, session
 from services.prediction_service import (
     ImageValidationError,
     PredictionServiceError,
+    UnsupportedImageError,
     analyze_upload,
 )
 from services.disease_service import get_disease, search_diseases
@@ -88,6 +89,8 @@ def analyze():
     try:
         result = analyze_upload(file)
         return jsonify(result)
+    except UnsupportedImageError as error:
+        return jsonify({"error": str(error)}), 422
     except ImageValidationError as error:
         return jsonify({"error": str(error)}), 400
     except PredictionServiceError as error:
