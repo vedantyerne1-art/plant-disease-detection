@@ -129,7 +129,7 @@ async function loadDiseaseLibrary() {
   if (category) params.set("category", category);
   try {
     const response = await fetch(`/api/diseases?${params}`);
-    const payload = await response.json();
+    const payload = await readJsonResponse(response);
     if (!response.ok) throw new Error(payload.error || "Could not load disease records.");
     grid.replaceChildren();
     if (!payload.diseases.length) {
@@ -169,13 +169,32 @@ function showToast(message, type = "success") {
   window.setTimeout(() => toast.remove(), 4200);
 }
 
+async function readJsonResponse(response) {
+  let body;
+  try {
+    body = await response.text();
+  } catch {
+    throw new Error(`Could not read the server response (HTTP ${response.status}). Please try again.`);
+  }
+
+  const status = response.ok ? "" : ` (HTTP ${response.status})`;
+  if (!body.trim()) {
+    throw new Error(`The server returned an empty response${status}. Please try again.`);
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(`The server returned an invalid JSON response${status}. Please try again.`);
+  }
+}
+
 async function apiFetch(url, options = {}) {
   const headers = new Headers(options.headers || {});
   if (csrfToken) headers.set("X-CSRF-Token", csrfToken);
   if (options.body && typeof options.body === "string") headers.set("Content-Type", "application/json");
   const response = await fetch(url, { ...options, headers });
-  let payload = {};
-  try { payload = await response.json(); } catch (error) { payload = {}; }
+  const payload = await readJsonResponse(response);
   if (!response.ok) throw new Error(payload.error || "Request failed.");
   return payload;
 }
@@ -791,7 +810,7 @@ analyzeBtn.addEventListener("click", async () => {
   try {
     const headers = csrfToken ? { "X-CSRF-Token": csrfToken } : {};
     const response = await fetch("/api/analyze", { method: "POST", body: formData, headers });
-    const payload = await response.json();
+    const payload = await readJsonResponse(response);
     if (!response.ok) throw new Error(payload.error || "Analysis failed.");
 
     analysisMessage.hidden = true;
@@ -818,7 +837,7 @@ analyzeBtn.addEventListener("click", async () => {
     if (payload.raw_label) {
       try {
         const diseaseResponse = await fetch(`/api/diseases/${encodeURIComponent(payload.raw_label)}`);
-        if (diseaseResponse.ok) disease = await diseaseResponse.json();
+        if (diseaseResponse.ok) disease = await readJsonResponse(diseaseResponse);
       } catch (error) {
         disease = null;
       }
